@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: evogard_laravel
+    volumes:
+      - .:/var/www
+    depends_on:
+      - mysql
+
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: evogard_reverb
+    working_dir: /var/www
+    command: php artisan reverb:start --host=0.0.0.0 --port=6001
+    volumes:
+      - .:/var/www
+    ports:
+      - "6001:6001"
+    depends_on:
+      - app
+
+  nginx:
+    image: nginx:stable
+    container_name: evogard_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  node:
+    image: node:20
+    container_name: evogard_node
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+
+  mysql:
+    image: mysql:8.0
+    container_name: evogard_mysql
+    restart: unless-stopped
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_DATABASE: evogard
+      MYSQL_USER: evogard
+      MYSQL_PASSWORD: evogard
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

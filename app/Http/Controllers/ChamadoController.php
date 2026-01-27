@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notificacao;
 use App\Jobs\NotificationDepartamentJob;
 use App\Http\Controllers\ExportPDFController;
+use Illuminate\Support\Facades\Log;
+use App\Events\TestBroadcastNow;
 
 class ChamadoController extends Controller
 {
@@ -237,8 +239,11 @@ class ChamadoController extends Controller
         
         sleep(1);
         
-        return compact("lista");
-
+        return response()->json([
+            "message" => "Registros".count($lista)." encontrados",
+            "data" => $lista,
+            "status" => 200
+        ], 200);
     }
 
     public function meuchamado(){
@@ -286,79 +291,108 @@ class ChamadoController extends Controller
     public function store(Request $request)
     {
 
-        // Valida o formulário principal
-        $request->validate([
-            "assunto_chamados" => ['required'],
-            "id_departamento_chamados" => ['required'],
-            "id_solicitacao_chamados" => ['required'],
-            "descricao_chamados" => ['required'],
-            "id_criador_chamados" => ['required'],
-            "nome_criador_chamados" => ['required'],
-            "vip_criador_chamados" => ['required']
-        ]);
+        try{
+            // Valida o formulário principal
+            $request->validate([
+                "assunto_chamados" => ['required', 'string', 'min:3'],
+                "id_departamento_chamados" => ['required'],
+                "id_solicitacao_chamados" => ['required'],
+                "descricao_chamados" => ['required', 'string', 'min:3'],
+                "id_criador_chamados" => ['nullable'],
+                "nome_criador_chamados" => ['nullable'],
+                "vip_criador_chamados" => ['nullable']
+            ]);
 
-        //Cria o chamado
-        $chamado = Chamado::create([
-            "assunto_chamados" => ucfirst(strtolower($request->input("assunto_chamados"))),
-            "id_departamento_chamados" => $request->input("id_departamento_chamados"),
-            "id_solicitacao_chamados" => $request->input("id_solicitacao_chamados"),
-            "descricao_chamados" => $request->input("descricao_chamados"),
-            "id_criador_chamados" => $request->input("id_criador_chamados"),
-            "nome_criador_chamados" => $request->input("nome_criador_chamados"),
-            "file" => "",
-            "vip_criador_chamados" => $request->input("vip_criador_chamados")
-        ]);
+            $idUser = Auth::user()->id_users;
+            $nameUser = Auth::user()->name;
+            $vipUser = Auth::user()->vip;
 
-        //Se o chamado foi criado
-        if($chamado->id_chamados){
+            //Cria o chamado
+            $chamado = Chamado::create([
+                "assunto_chamados" => ucfirst(strtolower($request->input("assunto_chamados"))),
+                "id_departamento_chamados" => $request->input("id_departamento_chamados"),
+                "id_solicitacao_chamados" => $request->input("id_solicitacao_chamados"),
+                "descricao_chamados" => $request->input("descricao_chamados"),
+                "id_criador_chamados" => $idUser,
+                "nome_criador_chamados" => $nameUser,
+                "file" => "",
+                "vip_criador_chamados" => $vipUser
+            ]);
 
-            /*if ($request->hasFile('file')) {
-                $arq = $request->file('file');
-                $nomeArquivo = time().'_'.$arq->getClientOriginalName();
-                $path = $arq->move(public_path('uploads'), $nomeArquivo);
+            Log::info($request);
 
-                $path = "/uploads/$nomeArquivo";
-            }*/
+            //Se o chamado foi criado
+            if($chamado->id_chamados){
 
-            //se houver anexos
-            if($request->hasFile("file")){
-
-                //vasculha a lista de anexos
-                foreach ($request->file("file") as $key => $value) {
-                    
-                    $arq = $value;
+                /*if ($request->hasFile('file')) {
+                    $arq = $request->file('file');
                     $nomeArquivo = time().'_'.$arq->getClientOriginalName();
                     $path = $arq->move(public_path('uploads'), $nomeArquivo);
 
                     $path = "/uploads/$nomeArquivo";
+                }*/
 
-                    //cadastra no banco o anexo
-                    File::create([
-                        "caminho_file" => $path,
-                        "id_chamado_file" => $chamado->id_chamados
-                    ]);
+                TestBroadcastNow::dispatch("Novo Ticket aberto. Cód: ".$chamado->id_chamados, $request->input("id_departamento_chamados"));
+
+                //se houver anexos
+                if($request->hasFile("file")){
+
+                    //vasculha a lista de anexos
+                    foreach ($request->file("file") as $key => $value) {
+                        
+                        $arq = $value;
+                        $nomeArquivo = time().'_'.$arq->getClientOriginalName();
+                        $path = $arq->move(public_path('uploads'), $nomeArquivo);
+
+                        $path = "/uploads/$nomeArquivo";
+
+                        //cadastra no banco o anexo
+                        File::create([
+                            "caminho_file" => $path,
+                            "id_chamado_file" => $chamado->id_chamados
+                        ]);
+
+                    }
 
                 }
 
+                $manifest = Manifestacao::create([
+                    "tipo_manifestacoes" => 0,
+                    "descricao_manifestacoes" => Auth::user()->name." abriu o ticket.",
+                    "id_chamado_manifestacoes" => $chamado->id_chamados
+                ]);
+
+                $notify = Notificacao::create([
+                    "descricao_notificacao" => Auth::user()->name." abriu o ticket de Nª ".$chamado->id_chamados,
+                    "tipo_notificacao" => 0,
+                    "id_manifestacao_notificacao" => $manifest->id_manifestacoes
+                ]);
+
+                NotificationDepartamentJob::dispatch($chamado->id_chamados);
+
+
+                return response()->json([
+                    'message' => 'Ticket aberto com sucesso!',
+                    'data' => $chamado,
+                    'status' => 201
+                ], 201);
+
             }
 
-            $manifest = Manifestacao::create([
-                "tipo_manifestacoes" => 0,
-                "descricao_manifestacoes" => Auth::user()->name." abriu o ticket.",
-                "id_chamado_manifestacoes" => $chamado->id_chamados
+        } catch (\Exception $e) {
+
+            Log::error('Erro ao buscar usuário', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ]);
 
-            $notify = Notificacao::create([
-                "descricao_notificacao" => Auth::user()->name." abriu o ticket de Nª ".$chamado->id_chamados,
-                "tipo_notificacao" => 0,
-                "id_manifestacao_notificacao" => $manifest->id_manifestacoes
-            ]);
-
-            NotificationDepartamentJob::dispatch($chamado->id_chamados);
-
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro interno'
+            ], 500);
         }
-
-        return to_route("form.cad.chamado");
+        
     }
 
     public function listar($id=null){

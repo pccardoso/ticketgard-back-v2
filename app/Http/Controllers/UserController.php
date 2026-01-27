@@ -16,7 +16,13 @@ class UserController extends Controller
     public function index()
     {
         $listaUsuarios = DB::table("users")->get();
-        return Inertia::render("System/ConUsuario", compact("listaUsuarios"));
+        //return Inertia::render("System/ConUsuario", compact("listaUsuarios"));
+
+        return response()->json([
+            'message' => "Lista de usuários encontrados",
+            'data' => $listaUsuarios,
+            'status' => 200,
+        ], 200);
     }
 
     public function consultar(){
@@ -39,17 +45,17 @@ class UserController extends Controller
     {
 
         $request->validate([
-            "name" => "required",
-            "tipo" => "required",
-            "email" => "required",
-            "password" => "required",
-            "administrador" => "required",
-            "res_chamados" => "required",
+            "name" => "required|string",
+            "tipo" => "required|string",
+            "email" => "required|string|email",
+            "password" => "required|string",
+            "administrador" => "required|integer",
+            "res_chamados" => "required|integer",
             "lista_departamento_users" => "required",
-            "vip" => "required"
+            "vip" => "required|integer"
         ]);
 
-        User::create([
+        $userCreated = User::create([
             "name" => $request->input("name"),
             "tipo" => $request->input("tipo"),
             "email" => $request->input("email"),
@@ -59,7 +65,13 @@ class UserController extends Controller
             "lista_departamento_users" => json_encode($request->input("lista_departamento_users")),
             "vip" => $request->input("vip")
         ]);
-        return to_route("form.cad.usuario");
+
+        return response()->json([
+            'message' => 'Usuário criado com sucesso!',
+            'status' => 200,
+            'data' => $userCreated
+        ], 200);
+        
     }
 
     /**

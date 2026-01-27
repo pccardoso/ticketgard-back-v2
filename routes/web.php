@@ -17,12 +17,25 @@ use App\Jobs\TestQueueJob;
 use App\Jobs\NotificationDepartamentJob;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ExportPDFController;
+use Illuminate\Support\Facades\Broadcast;
 
+Broadcast::routes([
+    'middleware' => ['auth:sanctum'],
+]);
+
+Route::get('/dd', function(){
+    return view('app');
+});
 
 //ROTAS DESPROTEGIDAS
 Route::post("/teste",[ChamadoController::class, "index2"]);
+Route::get("/teste",[ChamadoController::class, "index2"]);
 
 Route::post("/validar/login", [LoginController::class, "login"]);
+
+Route::get('/despro', function(){
+    return response()->json(['Oie']);
+});
 
 //ROTA PARA LOGIN (DESPROTEGIDA)
 Route::match(["get", "post"],"/login", function(){

@@ -20,7 +20,11 @@ class ManifestacaoController extends Controller
 
     public function consultar($id){
         $lista = DB::select("select * from manifestacoes left join users on users.id_users=manifestacoes.id_user_manifestacoes inner join chamados on manifestacoes.id_chamado_manifestacoes=chamados.id_chamados where id_chamado_manifestacoes = ? ORDER BY manifestacoes.data_cadastro_manifestacoes ", [$id]);
-        return compact("lista");
+        return response()->json([
+            "messsage" => "Mensagens encontradas",
+            "data" => $lista,
+            "status" => 200
+        ], 200);
     }
 
     /**
@@ -52,7 +56,7 @@ class ManifestacaoController extends Controller
             "tipo_manifestacoes" => 1,
             "descricao_manifestacoes" => $request->input("descricao_manifestacoes"),
             "id_chamado_manifestacoes" => $request->input("id_chamados"),
-            "id_user_manifestacoes" => $request->input("id_users"),
+            "id_user_manifestacoes" => Auth::user()->id_users,
             "anexo_manifestacoes" => $path
         ]);
 
@@ -61,6 +65,12 @@ class ManifestacaoController extends Controller
             "tipo_notificacao" => 1,
             "id_manifestacao_notificacao" => $manifest->id_manifestacoes
         ]);
+
+        return response()->json([
+            "message" => "Mensagem enviada com sucesso!",
+            "data" => $manifest,
+            "status" => 200
+        ], 200);
 
     }
 

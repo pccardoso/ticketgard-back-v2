@@ -15,7 +15,12 @@ class SolicitacaoController extends Controller
     public function index()
     {
         $listaSolicitacoes = DB::table("solicitacoes")->join("departamentos", "solicitacoes.id_departamento_solicitacoes", "=", "departamentos.id_departamentos")->get();
-        return Inertia::render("System/ConSolicitacao", compact("listaSolicitacoes"));
+
+        return response()->json([
+            'message' => 'Resultados encontrados!',
+            'data' => $listaSolicitacoes,
+            'status' => 200
+        ], 200);
     }
 
     public function consultar(){
@@ -48,8 +53,12 @@ class SolicitacaoController extends Controller
             "prioridade_solicitacoes" => ['required'],
             "tempo_solicitacoes" => ['required']
         ]));
-        sleep(1);
-        return to_route("form.cad.solicitacao");
+
+        return response()->json([
+            'message' => 'Tipo de solicitação criado com sucesso!',
+            'status' => 200,
+            'data' => $result
+        ], 200);
     }
 
     /**

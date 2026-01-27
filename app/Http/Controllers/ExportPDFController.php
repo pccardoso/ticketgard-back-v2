@@ -36,8 +36,6 @@ class ExportPDFController extends Controller
         $idSolicitacao = $request->input("solicitacao") ?? null;
         $idResponsavel = $request->input("responsavel") ?? null;
 
-
-
         $chamadoResult = Chamado::with(['departamento', 'solicitacao', 'user'])
             ->where('id_departamento_chamados', $idDepartamento) // sempre obrigatório
             ->when($idSolicitacao, function ($query, $idSolicitacao) {

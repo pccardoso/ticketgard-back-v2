@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Departamento;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class DepartamentoController extends Controller
 {
@@ -14,7 +16,12 @@ class DepartamentoController extends Controller
     public function index()
     {   
         $lista = Departamento::with("solicitacoes")->get();
-        return Inertia::render("System/ConDepartamento", compact("lista"));
+
+        return response()->json([
+            'data' => $lista
+        ]);
+
+        //return Inertia::render("System/ConDepartamento", compact("lista"));
     }
 
     /**
@@ -30,13 +37,16 @@ class DepartamentoController extends Controller
      */
     public function store(Request $request)
     {
+
+        Gate::authorize('create', Departamento::class);
+
         Departamento::create($request->validate([
             "nome_departamentos" => ['required'],
             "descricao_departamentos" => ['required']
         ]));
         sleep(seconds: 1);
 
-        return to_route("form.cad.departamento");
+        return response()->json(['message' => "Departamento cadastrado com sucesso!"]);
     }
 
     public function consultar(){
