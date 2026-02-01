@@ -38,7 +38,7 @@ class DepartamentoController extends Controller
     public function store(Request $request)
     {
 
-        Gate::authorize('create', Departamento::class);
+        Gate::authorize('view', Departamento::class);
 
         Departamento::create($request->validate([
             "nome_departamentos" => ['required'],

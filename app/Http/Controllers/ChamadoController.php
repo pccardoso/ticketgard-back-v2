@@ -16,6 +16,7 @@ use App\Jobs\NotificationDepartamentJob;
 use App\Http\Controllers\ExportPDFController;
 use Illuminate\Support\Facades\Log;
 use App\Events\TestBroadcastNow;
+use Illuminate\Support\Facades\Gate;
 
 class ChamadoController extends Controller
 {
@@ -398,7 +399,14 @@ class ChamadoController extends Controller
     public function listar($id=null){
         sleep(seconds: 1);
         $lista = Chamado::find($id);
-        return compact("lista");
+
+        Gate::authorize('view', $lista);
+
+        return response()->json([
+            'message' => 'Registro encontrado',
+            'data' => $lista,
+            'status' => 200
+        ], 200);
     }
 
     /**

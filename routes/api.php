@@ -43,6 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post("/cad/usu", [UserController::class, "store"]);
     Route::post("/cad/cha", [ChamadoController::class, "store"]);
 
+    Route::get('/con/cha/{id}', [ChamadoController::class, "listar"]);
+
     Route::match(['get', 'delete'], "/con/departamento", [DepartamentoController::class,"index"])->name("con.departamentos");
     Route::match(['get', 'delete'], "/con/solicitacao", [SolicitacaoController::class,"index"])->name("con.solicitacaos");
     Route::match(['get', 'delete'], "/con/usuario", [UserController::class,"index"])->name("con.usuarios");

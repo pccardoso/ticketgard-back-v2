@@ -19,12 +19,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ExportPDFController;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::routes([
-    'middleware' => ['auth:sanctum'],
-]);
 
-Route::get('/dd', function(){
-    return view('app');
+Route::get('/', function(){
+    return view('welcome');
 });
 
 //ROTAS DESPROTEGIDAS

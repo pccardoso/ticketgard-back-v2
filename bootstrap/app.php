@@ -4,6 +4,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,18 +23,29 @@ return Application::configure(basePath: dirname(__DIR__))
     })
 
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->statefulApi();
-        
-        // Adicione isso para garantir que o Laravel entenda que é uma API
-        $middleware->trustProxies(at: '*'); 
 
+        $middleware->statefulApi();
+        $middleware->trustProxies(at: '*'); 
         $middleware->validateCsrfTokens(except: [
             'broadcasting/auth',
             'api/broadcasting/auth',
         ]);
+
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+
+        $exceptions->render(function (AccessDeniedHttpException $e, $request) {
+            return response()->json([
+                'message' => "Evento não autorizado, favor contatar administração.",
+            ], 403);
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e, $request) {
+            return response()->json([
+                'message' => 'Rota não encontrada, favor, validar a requisição.',
+            ], 404);
+        });
+
     })
     ->create();
