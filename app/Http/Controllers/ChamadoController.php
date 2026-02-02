@@ -397,13 +397,23 @@ class ChamadoController extends Controller
     }
 
     public function listar($id=null){
-        sleep(seconds: 1);
+
+        
+
         $lista = Chamado::find($id);
+
+        if(!$lista){
+            return response()->json([
+                'message' => 'Ticket não encontrado!',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
 
         Gate::authorize('view', $lista);
 
         return response()->json([
-            'message' => 'Registro encontrado',
+            'message' => 'Ticket encontrado',
             'data' => $lista,
             'status' => 200
         ], 200);
@@ -428,13 +438,40 @@ class ChamadoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $result = Chamado::find($request->input("id_chamados"));
-        $result->assunto_chamados = $request->input("assunto_chamados");
-        $result->descricao_chamados = $request->input("descricao_chamados");
-        $result->save();
-        return to_route("meuchamado");
+
+        $result = Chamado::find($id);
+
+        if(!$result){
+            return response()->json([
+                'message' => 'Ticket não encontrado!',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
+
+        if( (int) $result->status_chamados  != 0){
+            return response()->json([
+                'message' => 'O Ticket não pode mais ser atualizado!',
+                'data' => [],
+                'status' => 422
+            ], 422); 
+        }
+
+        $dataValidate = $request->validate([
+            'assunto_chamados' => 'required|string',
+            'descricao_chamados' => 'required|string'
+        ]);
+
+        $result->update($dataValidate);
+
+        return response()->json([
+            'message' => 'Ticket atualizado com sucesso!',
+            'data' => $result,
+            'status' => 200
+        ], 200);
+
     }
 
     public function encaminhar(Request $request){

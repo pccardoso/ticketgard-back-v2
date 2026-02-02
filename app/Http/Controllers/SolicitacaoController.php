@@ -29,9 +29,22 @@ class SolicitacaoController extends Controller
     }
 
     public function listar($id=null){
-        sleep(seconds: 1);
+
+        
         $lista = Solicitacao::find($id);
-        return compact("lista");
+
+        if(!$lista){
+            return response()->json([
+                'message' => 'Solicitação não encontrada',
+                'status' => 404
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Solicitação encontrada',
+            'data' => $lista,
+            'status' => 200
+        ], 200);
     }
 
     /**
@@ -80,14 +93,33 @@ class SolicitacaoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $dep = Solicitacao::find($request->input("id_solicitacoes"));
-        $dep->titulo_solicitacoes = $request->input("titulo_solicitacoes");
-        $dep->prioridade_solicitacoes = $request->input("prioridade_solicitacoes");
-        $dep->tempo_solicitacoes = $request->input("tempo_solicitacoes");
-        $dep->save();
-        return to_route("con.solicitacao");
+
+        $dep = Solicitacao::find($id);
+
+        if(!$dep){
+            return response()->json([
+                'message' => 'Solicitação não encontrada',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
+
+        $data = $request->validate([
+            'id_departamento_solicitacoes' => 'required|integer|exists:departamentos,id_departamentos',
+            'titulo_solicitacoes' => 'required|string|min:5',
+            'prioridade_solicitacoes' => 'required',
+            'tempo_solicitacoes' => 'required|integer'
+        ]);
+
+        $dep->update($data);
+
+        return response()->json([
+            'message' => 'Tipo de solicitação atualizada com sucesso!',
+            'data' => $data,
+            'status' => 200
+        ], 200);
     }
 
     /**

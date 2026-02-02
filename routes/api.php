@@ -38,6 +38,7 @@ Route::post('/login', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    //ROTAS DE CADASTRO
     Route::post("/cad/dep", [DepartamentoController::class, "store"]);
     Route::post("/cad/sol", [SolicitacaoController::class, "store"]);
     Route::post("/cad/usu", [UserController::class, "store"]);
@@ -45,9 +46,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/con/cha/{id}', [ChamadoController::class, "listar"]);
 
+    //ROTAS DE LISTAGENS/DELETES
     Route::match(['get', 'delete'], "/con/departamento", [DepartamentoController::class,"index"])->name("con.departamentos");
     Route::match(['get', 'delete'], "/con/solicitacao", [SolicitacaoController::class,"index"])->name("con.solicitacaos");
     Route::match(['get', 'delete'], "/con/usuario", [UserController::class,"index"])->name("con.usuarios");
+
+    //ROTAS DE CONSULTAS
+    Route::get("/pes/departamento/{id}", [DepartamentoController::class, "listar"]);
+    Route::get("/pes/solicitacao/{id}", [SolicitacaoController::class, "listar"]);
+    Route::get("/pes/usuario/{id}", [UserController::class, "listar"]);
+    Route::get("/pes/ticket/{id}", [ChamadoController::class, "listar"]);
+
+    //ROTAS DE UPDATE
+    Route::put("/upd/dep/{id}", [DepartamentoController::class, "update"]);
+    Route::put("/upd/sol/{id}", [SolicitacaoController::class, "update"]);
+    Route::put("/upd/use/{id}", [UserController::class, "update"]);
+    Route::put("/upd/tic/{id}", [ChamadoController::class, "update"]);
 
     Route::post("/my-ticket",[ChamadoController::class, "index2"]);
 

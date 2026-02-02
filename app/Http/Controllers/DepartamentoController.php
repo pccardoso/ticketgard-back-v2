@@ -38,7 +38,7 @@ class DepartamentoController extends Controller
     public function store(Request $request)
     {
 
-        Gate::authorize('view', Departamento::class);
+        Gate::authorize('create', Departamento::class);
 
         Departamento::create($request->validate([
             "nome_departamentos" => ['required'],
@@ -55,9 +55,24 @@ class DepartamentoController extends Controller
     }
 
     public function listar($id=null){
-        sleep(seconds: 1);
+
+
         $lista = Departamento::find($id);
-        return compact("lista");
+
+        if(!$lista){{
+            return response()->json([
+                'message' => 'Departamento não encontrado!',
+                'status' => 404,
+                'data' => []
+            ], 404);
+        }}
+
+        return response()->json([
+            'message' => 'Departamento encontrado!',
+            'data' => $lista,
+            'status' => 200
+        ], 200);
+
     }
 
     /**
@@ -79,13 +94,29 @@ class DepartamentoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $dep = Departamento::find($request->input("id_departamentos"));
-        $dep->nome_departamentos = $request->input("nome_departamentos");
-        $dep->descricao_departamentos = $request->input("descricao_departamentos");
-        $dep->save();
-        return to_route("con.departamento");
+        $dep = Departamento::find($id);
+
+        if(!$dep){
+            return response()->json([
+                'message' => 'Departamento não encontrado.',
+                'status' => 404
+            ], 404);
+        }
+
+        $validate = $request->validate([
+            'nome_departamentos' => 'required|string',
+            'descricao_departamentos' => 'required|string'
+        ]);
+
+        $dep->update($validate);
+
+        return response()->json([
+            'message' => 'Departamento atualizado com sucesso!',
+            'data' => $dep,
+            'status' => 200
+        ], 200);
     }
     
     /**

@@ -17,6 +17,8 @@ class Departamento extends Model
         'descricao_departamentos'
     ];
 
+    protected $table = 'departamentos';
+
     protected $primaryKey = 'id_departamentos';
 
     public function solicitacoes()

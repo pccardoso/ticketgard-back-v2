@@ -21,8 +21,8 @@ class ChamadoPolicy
      */
     public function view(User $user, Chamado $chamado): bool
     {
-        return  $user->id_users === $chamado->id_criador_chamados ||
-                $user->id_users === $chamado->id_user_chamados;
+        return  $user->id_users === (int) $chamado->id_criador_chamados ||
+                $user->id_users === (int) $chamado->id_user_chamados;
     }
 
     /**

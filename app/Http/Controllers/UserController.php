@@ -107,21 +107,38 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
-        $dep = User::find($request->input("id_users"));
-        $dep->name = $request->input("name");
-        $dep->email = $request->input("email");
-        $dep->tipo = $request->input("tipo");
-        $dep->administrador = $request->input("administrador");
-        $dep->res_chamados = $request->input("res_chamados");
-        $dep->lista_departamento_users = json_encode($request->input("lista_departamento_users"));
-        $dep->vip = $request->input("vip");
-        $dep->save();
+        $dep = User::find($id);
 
-        DB::statement("UPDATE chamados SET nome_criador_chamados='".$request->input("name")."', vip_criador_chamados=".$request->input("vip")." WHERE id_criador_chamados=".$request->input("id_users"));
+        if(!$dep){
+            return response()->json([
+                'message' => 'Usuário não encontrado.',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
 
-        return to_route("con.usuario");
+        $dataValidate = $request->validate([
+            "name" => "required|string",
+            "tipo" => "required|string",
+            "email" => "required|string|email",
+            "administrador" => "required|integer",
+            "res_chamados" => "required|integer",
+            "lista_departamento_users" => "required",
+            "vip" => "required|integer"
+        ]);
+
+        $dep->update($dataValidate);
+
+        DB::statement("UPDATE chamados SET nome_criador_chamados='".$request->input("name")."', vip_criador_chamados=".$request->input("vip")." WHERE id_criador_chamados=".$id);
+
+        return response()->json([
+            'message' => 'Usuário atualizado com sucesso!',
+            'data' => $dep,
+            'status' => 200
+        ], 200);
+        
     }
 
     public function updateConfig(Request $request)
@@ -164,8 +181,24 @@ class UserController extends Controller
     }
 
     public function listar($id=null){
-        sleep(seconds: 1);
+
+
         $lista = User::find($id);
+
+        if(!$lista){
+            return response()->json([
+                'message' => 'Usuário não encontrado!',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Usuário encontrado com sucesso!',
+            'data' => $lista,
+            'status' => 200
+        ], 200);
+
         return compact("lista");
     }
 }
