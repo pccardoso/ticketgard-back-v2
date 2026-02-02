@@ -20,9 +20,9 @@ use App\Http\Controllers\ExportPDFController;
 use Illuminate\Support\Facades\Broadcast;
 
 
-Route::get('/', function(){
+Route::get('/', function () {
     return view('welcome');
-});
+})->withoutMiddleware('auth');
 
 //ROTAS DESPROTEGIDAS
 Route::post("/teste",[ChamadoController::class, "index2"]);

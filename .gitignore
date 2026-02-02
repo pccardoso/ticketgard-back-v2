@@ -22,4 +22,3 @@ yarn-error.log
 /.zed
 .env
 .env.example
-.docker-compose.yml
