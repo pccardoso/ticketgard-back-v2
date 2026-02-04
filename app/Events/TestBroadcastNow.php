@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -12,6 +11,7 @@ class TestBroadcastNow implements ShouldBroadcastNow
 {
     use Dispatchable, SerializesModels;
 
+    //tudo que for public vai para payload do canal.
     public $message;
     public $id_department;
 
@@ -23,11 +23,11 @@ class TestBroadcastNow implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return new PrivateChannel('Department.'.$this->id_department);
+        return new PrivateChannel('department.'.$this->id_department);
     }
 
     public function broadcastAs()
     {
-        return 'Enviar';
+        return 'new.ticket';
     }
 }

@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Manifestacao;
 use App\Models\Notificacao;
+use App\Models\Chamado;
+use App\Events\MessageEvent;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ManifestacaoController extends Controller
 {
@@ -19,10 +22,24 @@ class ManifestacaoController extends Controller
     }
 
     public function consultar($id){
-        $lista = DB::select("select * from manifestacoes left join users on users.id_users=manifestacoes.id_user_manifestacoes inner join chamados on manifestacoes.id_chamado_manifestacoes=chamados.id_chamados where id_chamado_manifestacoes = ? ORDER BY manifestacoes.data_cadastro_manifestacoes ", [$id]);
+
+        $chamado = Chamado::find($id);
+
+        if(!$chamado){
+            return response()->json([
+                'message' => 'Ticket não encontrado!',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
+
+        Gate::authorize('view', $chamado);
+
+        $manifestacoes = DB::select("select * from manifestacoes left join users on users.id_users=manifestacoes.id_user_manifestacoes inner join chamados on manifestacoes.id_chamado_manifestacoes=chamados.id_chamados where id_chamado_manifestacoes = ? ORDER BY manifestacoes.data_cadastro_manifestacoes ", [$id]);
+        
         return response()->json([
             "messsage" => "Mensagens encontradas",
-            "data" => $lista,
+            "data" => $manifestacoes,
             "status" => 200
         ], 200);
     }
@@ -59,6 +76,11 @@ class ManifestacaoController extends Controller
             "id_user_manifestacoes" => Auth::user()->id_users,
             "anexo_manifestacoes" => $path
         ]);
+
+        event(new MessageEvent(
+            $manifest,
+            (int) $request->input("id_chamados")
+        ));
 
         $notify = Notificacao::create([
             "descricao_notificacao" => Auth::user()->name." nova mensagem no ticket de Nº".$request->input("id_chamados"),

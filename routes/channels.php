@@ -8,7 +8,7 @@ Broadcast::routes([
     'middleware' => ['auth:sanctum'],
 ]);
 
-Broadcast::channel('Department.{id}', function ($user, $id) {
+Broadcast::channel('department.{id}', function ($user, $id) {
     $departamentos = json_decode($user->lista_departamento_users, true);
 
     if (!is_array($departamentos)) {
@@ -17,7 +17,7 @@ Broadcast::channel('Department.{id}', function ($user, $id) {
     return in_array((int) $id, array_map('intval', $departamentos));
 });
 
-Broadcast::channel('Ticket.{id}', function($user, $id_ticket){
+Broadcast::channel('ticket.{id}', function($user, $id_ticket){
 
     return Chamado::where('id_chamados', $id_ticket)
     ->where(function ($q) use ($user) {
@@ -26,4 +26,22 @@ Broadcast::channel('Ticket.{id}', function($user, $id_ticket){
     })
     ->exists();
 
+});
+
+Broadcast::channel('department-presence.{id}', function ($user, $id) {
+
+    $departamentos = json_decode($user->lista_departamento_users, true);
+
+    if (!is_array($departamentos)) {
+        return false;
+    }
+
+    if (!in_array((int) $id, array_map('intval', $departamentos))) {
+        return false;
+    }
+
+    return [
+        'id'   => $user->id_users,
+        'name' => $user->name,
+    ];
 });
