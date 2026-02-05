@@ -36,10 +36,10 @@ class ChamadoController extends Controller
 
     }
 
-    public function index2(Request $request)
+    public function getTicketUser(Request $request)
     {
 
-        $assunto = $request->input("assunto");
+        /*$assunto = $request->input("assunto");
         $codigo = $request->input("codigo");
         $prioridade = $request->input("prioridade");
         $situacao = $request->input("situacao");
@@ -52,7 +52,7 @@ class ChamadoController extends Controller
 
         /*if($prioridade){
             $sql.= " AND prioridade_solicitacoes = '$prioridade'";
-        }*/
+        }
 
         if($situacao != 5){
             $sql.= " AND status_chamados = $situacao";
@@ -92,12 +92,6 @@ class ChamadoController extends Controller
 
         foreach ($request->input("prio") as $key => $value) {
 
-            /*if($key == 0){
-                $sql.=" AND prioridade_solicitacoes='".$value."'";
-            }else{
-                $sql.=" OR prioridade_solicitacoes='".$value."'";
-            }*/
-
             if($key == 0){
                 $sql.=" AND ( prioridade_solicitacoes=".$value."";
             }else if(count($request->input("prio")) == $key + 1){
@@ -113,12 +107,6 @@ class ChamadoController extends Controller
         }
 
         foreach ($request->input("resp") as $key => $value) {
-
-            /*if($key == 0){
-                $sql.=" AND prioridade_solicitacoes='".$value."'";
-            }else{
-                $sql.=" OR prioridade_solicitacoes='".$value."'";
-            }*/
 
             if($key == 0){
                 $sql.=" AND ( id_user_chamados=".$value."";
@@ -138,18 +126,7 @@ class ChamadoController extends Controller
             $sql.= " AND id_chamados = $codigo";
         }
 
-        /*if($departamento){
-            $sql.="AND id_departamento_chamados=$departamento";
-        }*/
-
-        #percorre o array parar criar um SQL
         foreach ($request->input("deps") as $key => $value) {
-
-            /*if($key == 0){
-                $sql.=" AND id_departamento_chamados=".$value;
-            }else{
-                $sql.=" OR id_departamento_chamados=".$value;
-            }*/
 
             if($key == 0){
                 $sql.=" AND ( id_departamento_chamados=".$value."";
@@ -165,14 +142,9 @@ class ChamadoController extends Controller
             
         }
 
-        #percorre o array parar criar um SQL
         foreach ($request->input("aber") as $key => $value) {
 
-            /*if($key == 0){
-                $sql.=" AND id_departamento_chamados=".$value;
-            }else{
-                $sql.=" OR id_departamento_chamados=".$value;
-            }*/
+
 
             if($key == 0){
                 $sql.=" AND ( id_criador_chamados=".$value."";
@@ -188,14 +160,7 @@ class ChamadoController extends Controller
             
         }
 
-        #percorre o array parar criar um SQL
         foreach ($request->input("lis_dep") as $key => $value) {
-
-            /*if($key == 0){
-                $sql.=" AND id_departamento_chamados=".$value;
-            }else{
-                $sql.=" OR id_departamento_chamados=".$value;
-            }*/
 
             if($key == 0){
                 $sql.=" AND ( id_departamento_chamados=".$value."";
@@ -217,7 +182,6 @@ class ChamadoController extends Controller
 
         }
 
-        // tem data inicial mas sem final
         if($inicio && !$fim){   
 
             $ini = $this->dataen($inicio);
@@ -238,13 +202,51 @@ class ChamadoController extends Controller
 
         $lista = DB::select($sql);
         
-        sleep(1);
+        sleep(1);*/
+
+        $dataTicket = Chamado::with(
+            'departamento',
+            'solicitacao',
+            'user'
+        )
+        ->orderByDesc('id_chamados')
+        ->ticketUser()
+        ->get();
         
         return response()->json([
-            "message" => "Registros".count($lista)." encontrados",
-            "data" => $lista,
+            "message" => "Registros ".count($dataTicket)." encontrados",
+            "data" => $dataTicket,
             "status" => 200
         ], 200);
+    }
+
+    public function getTicketDepartmens(){
+
+        try{
+
+            $dataTicket = Chamado::with(
+                'departamento',
+                'solicitacao',
+                'user'
+            )
+            ->orderByDesc('id_chamados')
+            ->ticketDepartment()
+            ->get();
+            
+            return response()->json([
+                "message" => "Registros ".count($dataTicket)." encontrados",
+                "data" => $dataTicket,
+                "status" => 200
+            ], 200);
+
+        }catch(\Throwable $erro){
+
+            return response()->json([
+                "message" => $erro->getMessage()
+            ]);
+
+        }
+
     }
 
     public function meuchamado(){

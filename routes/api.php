@@ -63,7 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put("/upd/use/{id}", [UserController::class, "update"]);
     Route::put("/upd/tic/{id}", [ChamadoController::class, "update"]);
 
-    Route::post("/my-ticket",[ChamadoController::class, "index2"]);
+    Route::post("/my-ticket",[ChamadoController::class, "getTicketUser"]);
+    Route::post("/my-department", [ChamadoController::class, "getTicketDepartmens"]);
 
     Route::get('/load-chat/{id}', [ManifestacaoController::class, 'consultar']);
     Route::post('/send-message', [ManifestacaoController::class, 'store']);

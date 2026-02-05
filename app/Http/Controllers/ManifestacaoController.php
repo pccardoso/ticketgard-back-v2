@@ -8,6 +8,7 @@ use App\Models\Manifestacao;
 use App\Models\Notificacao;
 use App\Models\Chamado;
 use App\Events\MessageEvent;
+use App\Events\NotificationEvent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
@@ -77,10 +78,15 @@ class ManifestacaoController extends Controller
             "anexo_manifestacoes" => $path
         ]);
 
+        //enviar mensagem em tempo real pelo chat
         event(new MessageEvent(
             $manifest,
             (int) $request->input("id_chamados")
         ));
+
+        //enviar notificação ao usuários envolvidos.
+        
+        
 
         $notify = Notificacao::create([
             "descricao_notificacao" => Auth::user()->name." nova mensagem no ticket de Nº".$request->input("id_chamados"),

@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Scopes\TicketScope;
+use App\Trait\HasTicketScope;
+use Illuminate\Support\Facades\Auth;
+
 
 class Chamado extends Model
 {
-    //
 
     const CREATED_AT = 'data_cadastro_chamados';
     const UPDATED_AT = 'data_atualizado_chamados';
@@ -39,5 +42,16 @@ class Chamado extends Model
     public function user()
     {
         return $this->belongsTo(User::class, "id_user_chamados", "id_users");
+    }
+
+    public function scopeTicketUser($query){
+        return $query->where('id_criador_chamados', Auth::user()->id_users);
+    }
+
+    public function scopeTicketDepartment($query){
+
+        $departmentUser = json_decode(Auth::user()->lista_departamento_users);
+
+        return $query->whereIn('id_departamento_chamados',$departmentUser);
     }
 }
