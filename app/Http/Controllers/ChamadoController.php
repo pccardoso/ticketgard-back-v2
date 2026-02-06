@@ -277,20 +277,6 @@ class ChamadoController extends Controller
         //
     }
 
-    public function history($id){
-        $chamado = Chamado::find($id);
-        $user = User::find($chamado->id_criador_chamados);
-
-        $result = [
-            "chamado" => $chamado,
-            "user" => $user
-        ]; 
-        return Inertia::render("System/VisChamado", compact("result"));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
 
@@ -400,8 +386,6 @@ class ChamadoController extends Controller
 
     public function listar($id=null){
 
-        
-
         $lista = Chamado::find($id);
 
         if(!$lista){
@@ -411,8 +395,6 @@ class ChamadoController extends Controller
                 'status' => 404
             ], 404);
         }
-
-        Gate::authorize('view', $lista);
 
         return response()->json([
             'message' => 'Ticket encontrado',
@@ -476,17 +458,42 @@ class ChamadoController extends Controller
 
     }
 
-    public function encaminhar(Request $request){
-        $result = Chamado::find($request->input("id_chamados"));
-        $result->id_user_chamados = $request->input("id_user_chamados");
-        $result->status_chamados = $request->input("status_chamados");
-        $result->id_departamento_chamados = $request->input("id_departamento_chamados");
-        $result->save();
+    public function toForward(Request $request, $id){
+
+        $ticket = Chamado::find($id);
+
+        if(!$ticket){
+            return response()->json([
+                'message' => 'Ticket não encontrado!',
+                'data' => [],
+                'status' => 404
+            ], 404);
+        }
+
+        $statusTicket = (int) $ticket->status_chamados;
+
+        if($statusTicket === 2 || $statusTicket >= 4){
+            return response()->json([
+                'message' => 'Ticket em execução ou finalizados não podem ser encaminhados!',
+                'data' => [],
+                'status' => 422
+            ], 422);
+        }
+
+        $dataValidate = $request->validate([
+            'id_user_chamados' => 'required|integer|exists:users,id_users',
+            'id_departamento_chamados' => 'required|integer|exists:departamentos,id_departamentos'
+        ]);
+
+        $ticket->update([
+            ...$dataValidate,
+            'status_chamados' => 1,
+        ]);
 
         $manifest = Manifestacao::create([
             "tipo_manifestacoes" => 0,
             "descricao_manifestacoes" => Auth::user()->name." transferiu o ticket.",
-            "id_chamado_manifestacoes" => $request->input("id_chamados")
+            "id_chamado_manifestacoes" => $id
         ]);
 
         if($request->input("obs")){
@@ -494,78 +501,119 @@ class ChamadoController extends Controller
             $manifest = Manifestacao::create([
                 "tipo_manifestacoes" => 2,
                 "descricao_manifestacoes" => $request->input("obs"),
-                "id_chamado_manifestacoes" => $request->input("id_chamados")
+                "id_chamado_manifestacoes" => $id
             ]);
 
         }
 
-        return to_route("con.chamados");
+        return response()->json([
+            'message' => 'Ticket encaminhado com sucesso!',
+            'data' => $ticket,
+            'status' => 200
+        ], 200);
     }
 
-    public function executar(Request $request){
+    public function toExecute($id){
 
-        $result = Chamado::find($request->input("id_chamados"));
-        $result->status_chamados = $request->input("status_chamados");
-        $result->save();
+        $ticket = Chamado::findOrFail($id);
+
+        $statusTicket = (int) $ticket->status_chamados;
+
+        if(in_array($statusTicket, [0, 4, 5, 6])){
+            return response()->json([
+                'message' => 'Tickets abertos ou finalizados não podem ser executados!',
+                'data' => [],
+                'status' => 422
+            ], 422);
+        }
+
+        $ticket->update([
+            'status_chamados' => 2
+        ]);
 
         $manifest = Manifestacao::create([
             "tipo_manifestacoes" => 0,
             "descricao_manifestacoes" => Auth::user()->name." está executando o ticket.",
-            "id_chamado_manifestacoes" => $request->input("id_chamados")
+            "id_chamado_manifestacoes" => $id
         ]);
 
+        return response()->json([
+            'message' => 'Ticket em execução!',
+            'data' => $ticket,
+            'status' => 200
+        ], 200);
+
     }
 
-    public function assumir(Request $request){
+    public function toAssume($id){
 
-        $res = [];
+        $ticket = Chamado::findOrFail($id);
 
-        $result = Chamado::find($request->input("id_chamados"));
-        
-        if($result->status_chamados == 0){
+        $statusTicket = (int) $ticket->status_chamados;
 
-            $result->status_chamados = $request->input("status_chamados");
-            $result->id_user_chamados = $request->input("id_user_chamados");
-            $result->save();
-
-            $manifest = Manifestacao::create([
-                "tipo_manifestacoes" => 0,
-                "descricao_manifestacoes" => Auth::user()->name." aderiu o ticket.",
-                "id_chamado_manifestacoes" => $request->input("id_chamados")
-            ]);
-
-            $res = [1, "Chamado assumido com sucesso"];
-
-            /*$this->sendEmail([
-                "codigo" => $result->id_chamados,
-                "status" => 1,
-                "user" => Auth::user()->name,
-                "email" => "paulo.cardoso2408@gmail.com"
-            ]);*/
-
-        }else{
-
-            $res = [0, "Chamado já assumido por outro colaborador, favor, atualize novamente sua pesquisa!"];
-
+        if($statusTicket){
+            return response()->json([
+                'message' => 'O chamado já foi aderido por outro colaborador!',
+                'data' => [],
+                'status' => 422
+            ], 422);
         }
-        
-        return response()->json($res);
 
-    }
-
-    public function finalizar(Request $request){
-
-        $result = Chamado::find($request->input("id_chamados"));
-        $result->status_chamados = $request->input("status_chamados");
-        $result->data_finalizar_chamados = date('Y-m-d H:i:s');
-        $result->observacoes_finalizar_chamados = $request->input("observacao_chamados");
-        $result->save();
+        $ticket->update([
+            'status_chamados' => 1,
+            'id_user_chamados' => Auth::user()->id_users
+        ]);
 
         $manifest = Manifestacao::create([
             "tipo_manifestacoes" => 0,
-            "descricao_manifestacoes" => Auth::user()->name." encerrou o ticket com as seguintes observações: ". $request->input("observacao_chamados"),
-            "id_chamado_manifestacoes" => $request->input("id_chamados")
+            "descricao_manifestacoes" => Auth::user()->name." aderiu o ticket.",
+            "id_chamado_manifestacoes" => $id
         ]);
+        
+        return response()->json([
+            'message' => 'Ticket aderido com sucesso!',
+            'data' => $ticket,
+            'status' => 200
+        ], 200);
+
+    }
+
+    public function toFinish(Request $request, $id){
+
+
+        $ticket = Chamado::findOrFail($id);
+
+        $statusTicket = (int) $ticket->status_chamados;
+
+        if(!$statusTicket){
+            return response()->json([
+                'message' => 'Tickets que estão em aberto não podem ser finalizados!',
+                'data' => [],
+                'status' => 422
+            ], 422);
+        }
+    
+        $validate = $request->validate([
+            'observacoes_finalizar_chamados' => 'required|string|min:5',
+            'status_chamados' => 'required|integer|in:4,5,6'
+        ]);
+
+        $ticket->update([
+            ...$validate,
+            "data_finalizar_chamados" => date('Y-m-d H:i:s')
+        ]);
+
+        $manifest = Manifestacao::create([
+            "tipo_manifestacoes" => 0,
+            "descricao_manifestacoes" => Auth::user()->name." encerrou o ticket com as seguintes observações: ". $request->input("observacoes_finalizar_chamados"),
+            "id_chamado_manifestacoes" => $id
+        ]);
+
+        return response()->json([
+            'message' => 'Ticket finalizado com sucesso!',
+            'data' => $ticket,
+            'status' => 200
+        ], 200);
 
     }
 

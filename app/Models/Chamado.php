@@ -23,7 +23,11 @@ class Chamado extends Model
         "id_criador_chamados",
         "nome_criador_chamados",
         "file",
-        "vip_criador_chamados"
+        "vip_criador_chamados",
+        "id_user_chamados",
+        "status_chamados",
+        "observacoes_finalizar_chamados",
+        "data_finalizar_chamados"
     ];
 
     protected $table = "chamados";

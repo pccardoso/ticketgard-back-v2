@@ -69,4 +69,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/load-chat/{id}', [ManifestacaoController::class, 'consultar']);
     Route::post('/send-message', [ManifestacaoController::class, 'store']);
 
+    //ROTAS OPERACIONAIS
+    Route::post('/ticket/to-forward/{id}', [ChamadoController::class, 'toForward']);
+    Route::get('/ticket/to-execute/{id}', [ChamadoController::class, 'toExecute']);
+    Route::get('/ticket/to-assume/{id}', [ChamadoController::class, 'toAssume']);
+    Route::post('/ticket/to-finish/{id}', [ChamadoController::class, 'toFinish']);
+
 });
