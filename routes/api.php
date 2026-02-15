@@ -66,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put("/upd/use/{id}", [UserController::class, "update"]);
     Route::put("/upd/tic/{id}", [ChamadoController::class, "update"]);
 
+    //ROTAS DE EXCLUSÃO
+    Route::delete("/ticket/{id}", [ChamadoController::class, "destroy"]);
+
     Route::post("/my-ticket",[ChamadoController::class, "getTicketUser"]);
     Route::post("/my-department", [ChamadoController::class, "getTicketDepartmens"]);
 
@@ -79,24 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/to-execute/{id}', [ChamadoController::class, 'toExecute']);
         Route::get('/to-assume/{id}', [ChamadoController::class, 'toAssume']);
         Route::post('/to-finish/{id}', [ChamadoController::class, 'toFinish']);
+        Route::post('/to-interrupt/{id}', [ChamadoController::class, 'toInterrupt']);
     });
 
     //ROTAS DO TOKEN FIREBASE
-
     Route::post("/send/token", [NotificationController::class, "saveToken"]);
-
-    Route::post('/teste-array', function(){
-        
-        $teste= collect([1,2,3,4]);
-        
-        $dd = $teste->map(function (int $a) {
-            return $a * 2;
-        })->filter(function (int $b){
-            return $b > 7;
-        });
-
-        dd($dd);
-
-    });
 
 });

@@ -19,7 +19,7 @@ class NotificationService
     {
         $message = CloudMessage::withTarget('token', $token)
             ->withNotification(Notification::create($title, $body))
-            ->withData(['url' => "/history/".$codTicket]);
+            ->withData(['url' => "/open-chat/".$codTicket]);
 
         return $this->messaging->send($message);
     }

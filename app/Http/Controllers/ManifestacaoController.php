@@ -60,6 +60,26 @@ class ManifestacaoController extends Controller
     public function store(Request $request)
     {
 
+        $ticketCurrent = Chamado::find($request->input('id_chamados'));
+
+        if(!$ticketCurrent){
+            return response()->json([
+                "message" => "Ticket solicitado não foi encontrado!",
+                "data" => [],
+                "status" => 404
+            ], 404);
+        }
+
+        $statusTicket = (int) $ticketCurrent->status_chamados;
+
+        if(in_array($statusTicket, [0,4,5,6])){
+            return response()->json([
+                "message" => 'Ticket em aberto ou encerrado não podem receber novas mensagens!',
+                "data" => $ticketCurrent,
+                "status" => 422
+            ], 422);
+        }
+
         $path = "";
 
         // Processamento do arquivo
@@ -87,8 +107,6 @@ class ManifestacaoController extends Controller
 
         //enviar notificação ao usuários envolvidos.
         
-        
-
         $notify = Notificacao::create([
             "descricao_notificacao" => Auth::user()->name." nova mensagem no ticket de Nº".$request->input("id_chamados"),
             "tipo_notificacao" => 1,

@@ -659,8 +659,32 @@ class ChamadoController extends Controller
      */
     public function destroy(string $id)
     {
-        $dep = Chamado::find($id)->delete();
-        return to_route("meuchamado");
+
+        $ticketCurrent = Chamado::find($id);
+
+        if(!$ticketCurrent){
+            return response()->json([
+                "message" => "Ticket de não encontrado",
+                "data" => [],
+                "status" => 404
+            ], 404);
+        }
+
+        if($ticketCurrent->status_chamados != 0){
+            return response()->json([
+                "message" => "Apenas ticket com status aguardando é que podem ser removidos.",
+                "status" => 422,
+                "data" => $ticketCurrent
+            ], 422);
+        }
+
+        $ticketCurrent->delete();
+
+        return response()->json([
+            "message" => "Ticket removido com sucesso!",
+            "data" => $ticketCurrent,
+            "status" => 200
+        ], 200);
     }
 
     public function getCountTicket(Request $request){
