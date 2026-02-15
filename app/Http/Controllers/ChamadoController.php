@@ -386,7 +386,9 @@ class ChamadoController extends Controller
 
     public function listar($id=null){
 
-        $lista = Chamado::find($id);
+        $lista = Chamado::with('departamento', 'solicitacao', 'user', 'file')
+                    ->where('id_chamados', $id)
+                    ->find($id);
 
         if(!$lista){
             return response()->json([
@@ -408,7 +410,7 @@ class ChamadoController extends Controller
      */
     public function show(string $id)
     {
-        //
+        
     }
 
     /**
@@ -617,16 +619,39 @@ class ChamadoController extends Controller
 
     }
 
-    public function interromper(Request $request){
-        $result = Chamado::find($request->input("id_chamados"));
-        $result->status_chamados = $request->input("status_chamados");
-        $result->save();
+    public function toInterrupt(Request $request, $id){
+
+        $ticket = Chamado::findOrFail($id);
+
+        $statusTicket = (int) $ticket->status_chamados;
+
+        $validateTicket = $request->validate([
+            'observacoes_transferencia' => 'required|string|min:5'
+        ]);
+
+        if($statusTicket != 2 && Auth::user()->id_users != $ticket->id_user_chamados){
+            return response()->json([
+                'message' => 'O Ticket não pode ser interrompido, verifique se o ticket está em execução ou se você é responsável pelo atendimento.',
+                'data' => [],
+                'status' => 422
+            ], 422);
+        }
+
+        $ticket->update([
+            'status_chamados' => 3
+        ]);
 
         $manifest = Manifestacao::create([
             "tipo_manifestacoes" => 3,
             "descricao_manifestacoes" => Auth::user()->name." sinalizou pendência na execução do ticket: ".$request->input("observacoes_transferencia"),
-            "id_chamado_manifestacoes" => $request->input("id_chamados")
+            "id_chamado_manifestacoes" => $id
         ]);
+
+        return response()->json([
+            'message' => 'Ticket interrompido com sucesso!',
+            'data' => $ticket,
+            'status' => 200
+        ], 200);
     }
 
     /**

@@ -34,7 +34,8 @@ class User extends Authenticatable
         'vip',
         'notify_email',
         'notify_popup',
-        'token_firebase'
+        'token_firebase',
+        'avatar_path_users'
     ];
 
     protected $casts = [

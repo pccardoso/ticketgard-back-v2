@@ -12,6 +12,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChamadoController;
 use App\Events\TestBroadcastNow;
 use App\Http\Controllers\ManifestacaoController;
+use App\Http\Controllers\NotificationController;
+
+use Illuminate\Support\Collection;
 
 Route::post('/login', function (Request $request) {
 
@@ -69,10 +72,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/load-chat/{id}', [ManifestacaoController::class, 'consultar']);
     Route::post('/send-message', [ManifestacaoController::class, 'store']);
 
-    //ROTAS OPERACIONAIS
-    Route::post('/ticket/to-forward/{id}', [ChamadoController::class, 'toForward']);
-    Route::get('/ticket/to-execute/{id}', [ChamadoController::class, 'toExecute']);
-    Route::get('/ticket/to-assume/{id}', [ChamadoController::class, 'toAssume']);
-    Route::post('/ticket/to-finish/{id}', [ChamadoController::class, 'toFinish']);
+
+    //ROTAS PARA ADMINISTRAR O TICKET
+    Route::prefix('ticket')->group(function (){
+        Route::post('/to-forward/{id}', [ChamadoController::class, 'toForward']);
+        Route::get('/to-execute/{id}', [ChamadoController::class, 'toExecute']);
+        Route::get('/to-assume/{id}', [ChamadoController::class, 'toAssume']);
+        Route::post('/to-finish/{id}', [ChamadoController::class, 'toFinish']);
+    });
+
+    //ROTAS DO TOKEN FIREBASE
+
+    Route::post("/send/token", [NotificationController::class, "saveToken"]);
+
+    Route::post('/teste-array', function(){
+        
+        $teste= collect([1,2,3,4]);
+        
+        $dd = $teste->map(function (int $a) {
+            return $a * 2;
+        })->filter(function (int $b){
+            return $b > 7;
+        });
+
+        dd($dd);
+
+    });
 
 });

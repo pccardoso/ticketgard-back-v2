@@ -8,6 +8,7 @@ use App\Trait\HasTicketScope;
 use Illuminate\Support\Facades\Auth;
 
 
+
 class Chamado extends Model
 {
 
@@ -46,6 +47,10 @@ class Chamado extends Model
     public function user()
     {
         return $this->belongsTo(User::class, "id_user_chamados", "id_users");
+    }
+    
+    public function file(){
+        return $this->hasMany(File::class, 'id_chamado_file', 'id_chamados');
     }
 
     public function scopeTicketUser($query){

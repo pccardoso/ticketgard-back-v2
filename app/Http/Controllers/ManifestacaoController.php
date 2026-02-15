@@ -11,6 +11,7 @@ use App\Events\MessageEvent;
 use App\Events\NotificationEvent;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 class ManifestacaoController extends Controller
 {
