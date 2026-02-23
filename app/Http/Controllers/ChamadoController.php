@@ -227,7 +227,8 @@ class ChamadoController extends Controller
             $dataTicket = Chamado::with(
                 'departamento',
                 'solicitacao',
-                'user'
+                'user',
+                'user_create'
             )
             ->orderByDesc('id_chamados')
             ->ticketDepartment()
@@ -474,9 +475,9 @@ class ChamadoController extends Controller
 
         $statusTicket = (int) $ticket->status_chamados;
 
-        if($statusTicket === 2 || $statusTicket >= 4){
+        if($statusTicket >= 4){
             return response()->json([
-                'message' => 'Ticket em execução ou finalizados não podem ser encaminhados!',
+                'message' => 'Ticket finalizado não pode ser transferido!',
                 'data' => [],
                 'status' => 422
             ], 422);
@@ -484,7 +485,8 @@ class ChamadoController extends Controller
 
         $dataValidate = $request->validate([
             'id_user_chamados' => 'required|integer|exists:users,id_users',
-            'id_departamento_chamados' => 'required|integer|exists:departamentos,id_departamentos'
+            'id_departamento_chamados' => 'required|integer|exists:departamentos,id_departamentos',
+            'obs' => 'required|string|min:5'
         ]);
 
         $ticket->update([

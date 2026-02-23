@@ -30,6 +30,40 @@ class UserController extends Controller
         return compact("lista");
     }
 
+    public function updateAvatar(Request $request, $id){
+
+        $userCurrent = User::find($id);
+
+        if(!$userCurrent){
+            return response()->json([
+                "message" => "Usuário não encontrado!",
+                "data" => [],
+                "status" => 404
+            ], 404);
+        }
+
+        $dataValidate = $request->validate([
+            "avatar" => "required|file|mimes:jpg,png|max:2048"
+        ]);
+
+        $arq = $request->file('avatar');
+        $nomeArquivo = time().'_'.$arq->getClientOriginalName();
+        $path = $arq->move(public_path('uploads'), $nomeArquivo);
+
+        $path = "/uploads/$nomeArquivo";
+
+        $userCurrent->update([
+            "avatar_path_users" => $path
+        ]);
+
+        return response()->json([
+            "message" => "Avatar atualizado com sucesso!",
+            "data" => $userCurrent,
+            "status" => 200
+        ], 200);
+
+    }
+
     /**
      * Show the form for creating a new resource.
      */

@@ -23,8 +23,20 @@ class ManifestacaoPolicy
      */
     public function view(User $user, Chamado $chamado): bool
     {
-        return  $chamado->id_user_chamados === $user->id_users ||
-                $chamado->id_criador_chamados === $user->id_users;
+
+        $departmentUser = json_decode($user->lista_departamento_users, true) ?? [];
+
+        $userChamado =  $chamado->id_user_chamados === $user->id_users ||
+                        $chamado->id_criador_chamados === $user->id_users;
+
+        $userLeader = 
+            (int) $user->tipo === 2 &&
+            in_array(
+                (int) $chamado->id_departamento_chamados,
+                array_map('intval', $departmentUser)
+            );
+
+        return $userChamado || $userLeader;
     }
 
     /**

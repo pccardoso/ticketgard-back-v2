@@ -65,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put("/upd/sol/{id}", [SolicitacaoController::class, "update"]);
     Route::put("/upd/use/{id}", [UserController::class, "update"]);
     Route::put("/upd/tic/{id}", [ChamadoController::class, "update"]);
+    Route::post("/upd/avatar/{id}", [UserController::class, "updateAvatar"]);
 
     //ROTAS DE EXCLUSÃO
     Route::delete("/ticket/{id}", [ChamadoController::class, "destroy"]);

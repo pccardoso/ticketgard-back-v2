@@ -48,6 +48,10 @@ class Chamado extends Model
     {
         return $this->belongsTo(User::class, "id_user_chamados", "id_users");
     }
+
+    public function user_create(){
+        return $this->belongsTo(User::class, "id_criador_chamados", "id_users");
+    }
     
     public function file(){
         return $this->hasMany(File::class, 'id_chamado_file', 'id_chamados');

@@ -99,16 +99,26 @@ class ManifestacaoController extends Controller
             "anexo_manifestacoes" => $path
         ]);
 
+        $manifest->load('user');
+
         //enviar mensagem em tempo real pelo chat
         event(new MessageEvent(
             $manifest,
             (int) $request->input("id_chamados")
         ));
 
+        $idUserSend = Auth::user()->id_users === $ticketCurrent->id_criador_chamados
+                        ? $ticketCurrent->id_user_chamados : $ticketCurrent->id_criador_chamados;
+
+        event(new NotificationEvent(
+            "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
+            $idUserSend
+        ));
+
         //enviar notificação ao usuários envolvidos.
         
         $notify = Notificacao::create([
-            "descricao_notificacao" => Auth::user()->name." nova mensagem no ticket de Nº".$request->input("id_chamados"),
+            "descricao_notificacao" => "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
             "tipo_notificacao" => 1,
             "id_manifestacao_notificacao" => $manifest->id_manifestacoes
         ]);

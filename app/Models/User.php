@@ -35,12 +35,14 @@ class User extends Authenticatable
         'notify_email',
         'notify_popup',
         'token_firebase',
-        'avatar_path_users'
+        'avatar_path_users',
+        'status'
     ];
 
     protected $casts = [
         "notify_email" => "boolean",
-        "notify_popup" => "boolean"
+        "notify_popup" => "boolean",
+        'status' => "boolean"
     ];
 
     /**
