@@ -59,75 +59,84 @@ class ManifestacaoController extends Controller
      */
     public function store(Request $request)
     {
+        try{
+            $ticketCurrent = Chamado::find($request->input('id_chamados'));
 
-        $ticketCurrent = Chamado::find($request->input('id_chamados'));
+            if(!$ticketCurrent){
+                return response()->json([
+                    "message" => "Ticket solicitado não foi encontrado!",
+                    "data" => [],
+                    "status" => 404
+                ], 404);
+            }
 
-        if(!$ticketCurrent){
+            $statusTicket = (int) $ticketCurrent->status_chamados;
+
+            if(in_array($statusTicket, [0,4,5,6])){
+                return response()->json([
+                    "message" => 'Ticket em aberto ou encerrado não podem receber novas mensagens!',
+                    "data" => $ticketCurrent,
+                    "status" => 422
+                ], 422);
+            }
+
+            $path = "";
+
+            // Processamento do arquivo
+            if ($request->hasFile('anexo_manifestacoes')) {
+                $arq = $request->file('anexo_manifestacoes');
+                $nomeArquivo = time().'_'.$arq->getClientOriginalName();
+                $path = $arq->move(public_path('uploads'), $nomeArquivo);
+
+                $path = "/uploads/$nomeArquivo";
+            }
+
+            $manifest = Manifestacao::create([
+                "tipo_manifestacoes" => 1,
+                "descricao_manifestacoes" => $request->input("descricao_manifestacoes"),
+                "id_chamado_manifestacoes" => $request->input("id_chamados"),
+                "id_user_manifestacoes" => Auth::user()->id_users,
+                "anexo_manifestacoes" => $path,
+                "id_response" => $request->input("id_response")
+            ]);
+
+            $manifest->load('user');
+
+            //enviar mensagem em tempo real pelo chat
+            event(new MessageEvent(
+                $manifest,
+                (int) $request->input("id_chamados")
+            ));
+
+            $idUserSend = Auth::user()->id_users === $ticketCurrent->id_criador_chamados
+                            ? $ticketCurrent->id_user_chamados : $ticketCurrent->id_criador_chamados;
+
+            event(new NotificationEvent(
+                "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
+                $idUserSend
+            ));
+
+            //enviar notificação ao usuários envolvidos.
+            
+            $notify = Notificacao::create([
+                "descricao_notificacao" => "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
+                "tipo_notificacao" => 1,
+                "id_manifestacao_notificacao" => $manifest->id_manifestacoes
+            ]);
+
             return response()->json([
-                "message" => "Ticket solicitado não foi encontrado!",
-                "data" => [],
-                "status" => 404
-            ], 404);
-        }
+                "message" => "Mensagem enviada com sucesso!",
+                "data" => $manifest,
+                "status" => 200
+            ], 200);
 
-        $statusTicket = (int) $ticketCurrent->status_chamados;
-
-        if(in_array($statusTicket, [0,4,5,6])){
-            return response()->json([
-                "message" => 'Ticket em aberto ou encerrado não podem receber novas mensagens!',
-                "data" => $ticketCurrent,
-                "status" => 422
-            ], 422);
-        }
-
-        $path = "";
-
-        // Processamento do arquivo
-        if ($request->hasFile('anexo_manifestacoes')) {
-            $arq = $request->file('anexo_manifestacoes');
-            $nomeArquivo = time().'_'.$arq->getClientOriginalName();
-            $path = $arq->move(public_path('uploads'), $nomeArquivo);
-
-            $path = "/uploads/$nomeArquivo";
-        }
-
-        $manifest = Manifestacao::create([
-            "tipo_manifestacoes" => 1,
-            "descricao_manifestacoes" => $request->input("descricao_manifestacoes"),
-            "id_chamado_manifestacoes" => $request->input("id_chamados"),
-            "id_user_manifestacoes" => Auth::user()->id_users,
-            "anexo_manifestacoes" => $path
-        ]);
-
-        $manifest->load('user');
-
-        //enviar mensagem em tempo real pelo chat
-        event(new MessageEvent(
-            $manifest,
-            (int) $request->input("id_chamados")
-        ));
-
-        $idUserSend = Auth::user()->id_users === $ticketCurrent->id_criador_chamados
-                        ? $ticketCurrent->id_user_chamados : $ticketCurrent->id_criador_chamados;
-
-        event(new NotificationEvent(
-            "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
-            $idUserSend
-        ));
-
-        //enviar notificação ao usuários envolvidos.
-        
-        $notify = Notificacao::create([
-            "descricao_notificacao" => "Nova mensagem de ".Auth::user()->name.", ticket de Nº".$request->input("id_chamados"),
-            "tipo_notificacao" => 1,
-            "id_manifestacao_notificacao" => $manifest->id_manifestacoes
-        ]);
+        } catch (\Exception $e) {
 
         return response()->json([
-            "message" => "Mensagem enviada com sucesso!",
-            "data" => $manifest,
-            "status" => 200
-        ], 200);
+            'message' => 'Erro ao enviar notificação',
+            'error' => $e->getMessage()
+        ], 500);
+    }
 
     }
 

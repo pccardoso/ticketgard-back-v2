@@ -8,11 +8,40 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    public function login(Request $request){
+
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+            'device_name' => 'required',
+        ]);
+
+        $user = User::where('email', $request->email)
+                ->where('status', true)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['As credenciais fornecidas estão incorretas.'],
+            ]);
+        }
+
+        return response()->json([
+            "message" => "Usuário autenticado com sucesso!",
+            "data" => $user,
+            "token" => $user->createToken($request->device_name)->plainTextToken
+        ]);
+
+    }
+
     public function index()
     {
         $listaUsuarios = DB::table("users")->get();
@@ -175,34 +204,61 @@ class UserController extends Controller
         
     }
 
-    public function updateConfig(Request $request)
+    public function changeNotifications(Request $request)
     {
         $validated = $request->validate([
             'notify_email' => 'boolean|required',
             'notify_popup' => 'boolean|required',
         ]);
 
-        $user = Auth::user();
+        $userCurrent = Auth::user();
 
-        $user->update($validated);
+        $userCurrent->update($validated);
 
         return response()->json([
             'status' => 200,
             'message' => 'Configurações atualizadas com sucesso!',
-            'data' => $user->refresh(),
+            'data' => $userCurrent->refresh(),
         ], 200);
     }
 
 
-    public function alterarsenha(Request $request){
-        $dep = User::find($request->input("id_users"));
-        $dep->password = $request->input("senha2");
-        $dep->save();
+    public function changePassword(Request $request){
 
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect("/login");
+        $dataValidate = $request->validate([
+            "password" => "required|string",
+            "confirm_password" => "required|string"
+        ]);
+
+        $userCurrent = User::find(Auth::user()->id_users);
+
+        if(!$userCurrent){
+            return response()->json([
+                "message" => "Usuário não encontrado",
+                "data" => [],
+                "status" => 404
+            ]);
+        }
+
+        if($request->input('password') !== $request->input('confirm_password')){
+            return response()->json([
+                "message" => "As senhas informadas diferem, por favor, validar.",
+                "status" => 422,
+                "data" => []
+            ], 422);
+        }
+
+        $userCurrent->update([
+            "password" => $request->input("confirm_password")
+        ]);
+
+        $request->user()->tokens()->delete();
+        
+        return response()->json([
+            "message" => "Credenciais alteradas com sucesso!",
+            "data" => $userCurrent,
+            "status" => 200
+        ], 200); 
     }
 
     /**

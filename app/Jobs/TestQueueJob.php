@@ -24,8 +24,6 @@ class TestQueueJob implements ShouldQueue
      */
     public function handle(): void
     {
-
-        
         $timestamp = now()->toDateTimeString();
         Log::info("SUCCESS: O job de teste de fila foi executado com sucesso em: {$timestamp}");
     }

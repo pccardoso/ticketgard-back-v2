@@ -1,43 +1,19 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\ExportPDFController;
 use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\SolicitacaoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ChamadoController;
-use App\Events\TestBroadcastNow;
 use App\Http\Controllers\ManifestacaoController;
 use App\Http\Controllers\NotificationController;
 
+use App\Http\Controllers\OCRController;
+
 use Illuminate\Support\Collection;
 
-Route::post('/login', function (Request $request) {
-
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-        'device_name' => 'required',
-    ]);
-
-    $user = User::where('email', $request->email)->first();
-
-    if (! $user || ! Hash::check($request->password, $user->password)) {
-        throw ValidationException::withMessages([
-            'email' => ['As credenciais fornecidas estão incorretas.'],
-        ]);
-    }
-
-    return response()->json([
-        "message" => "Usuário autenticado com sucesso!",
-        "data" => $user,
-        "token" => $user->createToken($request->device_name)->plainTextToken
-    ]);
-});
+Route::post('/login', [UserController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -66,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put("/upd/use/{id}", [UserController::class, "update"]);
     Route::put("/upd/tic/{id}", [ChamadoController::class, "update"]);
     Route::post("/upd/avatar/{id}", [UserController::class, "updateAvatar"]);
+    Route::post("/upd/password", [UserController::class, "changePassword"]);
+    Route::post('/upd/notifications', [UserController::class, 'changeNotifications']);
 
     //ROTAS DE EXCLUSÃO
     Route::delete("/ticket/{id}", [ChamadoController::class, "destroy"]);
@@ -88,5 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //ROTAS DO TOKEN FIREBASE
     Route::post("/send/token", [NotificationController::class, "saveToken"]);
+
+    Route::get('/tes', [ChamadoController::class, 'testeSQL']);
+
+    Route::get('/testeocr', [OCRController::class, "getData"]);
 
 });

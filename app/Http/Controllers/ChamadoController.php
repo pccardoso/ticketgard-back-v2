@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use App\Events\TestBroadcastNow;
 use Illuminate\Support\Facades\Gate;
 
+use App\Jobs\TesteJob;
+
 class ChamadoController extends Controller
 {
     /**
@@ -39,171 +41,6 @@ class ChamadoController extends Controller
     public function getTicketUser(Request $request)
     {
 
-        /*$assunto = $request->input("assunto");
-        $codigo = $request->input("codigo");
-        $prioridade = $request->input("prioridade");
-        $situacao = $request->input("situacao");
-        $departamento = $request->input("departamento");
-
-        $inicio = $request->input("inicio");
-        $fim = $request->input("fim");
-
-        $sql = "SELECT * FROM chamados INNER JOIN departamentos ON chamados.id_departamento_chamados = departamentos.id_departamentos INNER JOIN solicitacoes ON chamados.id_solicitacao_chamados = solicitacoes.id_solicitacoes LEFT JOIN users ON chamados.id_user_chamados = users.id_users WHERE (assunto_chamados LIKE '%$assunto%' OR descricao_chamados LIKE '%$assunto%')";
-
-        /*if($prioridade){
-            $sql.= " AND prioridade_solicitacoes = '$prioridade'";
-        }
-
-        if($situacao != 5){
-            $sql.= " AND status_chamados = $situacao";
-        }
-
-        foreach ($request->input("sits") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( status_chamados=".$value."";
-            }else if(count($request->input("sits")) == $key + 1){
-                $sql.=" OR status_chamados=".$value.")";
-            }else{
-                $sql.=" OR status_chamados=".$value."";
-            }
-
-            if(count($request->input("sits")) == 1){
-                $sql.=")";
-            }
-            
-        } 
-
-         foreach ($request->input("soli") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( id_solicitacao_chamados=".$value."";
-            }else if(count($request->input("soli")) == $key + 1){
-                $sql.=" OR id_solicitacao_chamados=".$value.")";
-            }else{
-                $sql.=" OR id_solicitacao_chamados=".$value."";
-            }
-
-            if(count($request->input("soli")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        foreach ($request->input("prio") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( prioridade_solicitacoes=".$value."";
-            }else if(count($request->input("prio")) == $key + 1){
-                $sql.=" OR prioridade_solicitacoes=".$value.")";
-            }else{
-                $sql.=" OR prioridade_solicitacoes=".$value."";
-            }
-
-            if(count($request->input("prio")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        foreach ($request->input("resp") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( id_user_chamados=".$value."";
-            }else if(count($request->input("resp")) == $key + 1){
-                $sql.=" OR id_user_chamados=".$value.")";
-            }else{
-                $sql.=" OR id_user_chamados=".$value."";
-            }
-
-            if(count($request->input("resp")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        if($codigo){
-            $sql.= " AND id_chamados = $codigo";
-        }
-
-        foreach ($request->input("deps") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( id_departamento_chamados=".$value."";
-            }else if(count($request->input("deps")) == $key + 1){
-                $sql.=" OR id_departamento_chamados=".$value.")";
-            }else{
-                $sql.=" OR id_departamento_chamados=".$value."";
-            }
-
-            if(count($request->input("deps")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        foreach ($request->input("aber") as $key => $value) {
-
-
-
-            if($key == 0){
-                $sql.=" AND ( id_criador_chamados=".$value."";
-            }else if(count($request->input("aber")) == $key + 1){
-                $sql.=" OR id_criador_chamados=".$value.")";
-            }else{
-                $sql.=" OR id_criador_chamados=".$value."";
-            }
-
-            if(count($request->input("aber")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        foreach ($request->input("lis_dep") as $key => $value) {
-
-            if($key == 0){
-                $sql.=" AND ( id_departamento_chamados=".$value."";
-            }else if(count($request->input("lis_dep")) == $key + 1){
-                $sql.=" OR id_departamento_chamados=".$value.")";
-            }else{
-                $sql.=" OR id_departamento_chamados=".$value."";
-            }
-
-            if(count($request->input("lis_dep")) == 1){
-                $sql.=")";
-            }
-            
-        }
-
-        if($request->input("id_user")){
-
-            $sql.=" AND (id_criador_chamados = ".$request->input("id_user").")";
-
-        }
-
-        if($inicio && !$fim){   
-
-            $ini = $this->dataen($inicio);
-
-            $sql .= " AND data_cadastro_chamados BETWEEN '$ini 00:00:00' AND '".date("y-m-d")." 23:59:59'";
-        }else if($inicio && $fim){
-            $ini = $this->dataen($inicio);
-            $fim = $this->dataen($fim);
-            $sql .= " AND data_cadastro_chamados BETWEEN '$ini 00:00:00' AND '$fim 23:59:59'";
-        }else if(!$inicio && $fim){
-
-            $fim = $this->dataen($fim);
-
-            $sql .= " AND data_cadastro_chamados BETWEEN '0000-00-00 00:00:00' AND '$fim 23:59:59'";
-        }
-
-        $sql .= " ORDER BY chamados.data_cadastro_chamados DESC";
-
-        $lista = DB::select($sql);
-        
-        sleep(1);*/
-
         $dataTicket = Chamado::with(
             'departamento',
             'solicitacao',
@@ -220,22 +57,71 @@ class ChamadoController extends Controller
         ], 200);
     }
 
-    public function getTicketDepartmens(){
+    public function getTicketDepartmens(Request $request){
 
         try{
 
-            $dataTicket = Chamado::with(
+            $query = Chamado::with([
                 'departamento',
                 'solicitacao',
                 'user',
                 'user_create'
-            )
+            ])
             ->orderByDesc('id_chamados')
             ->ticketDepartment()
-            ->get();
-            
+
+            ->when($request->assunto, function ($q) use ($request) {
+                $q->where(function ($sub) use ($request) {
+                    $sub->where('assunto_chamados', 'like', "%{$request->assunto}%")
+                        ->orWhere('descricao_chamados', 'like', "%{$request->assunto}%");
+                });
+            })
+
+            ->when($request->situacao, fn($q) => $q->whereIn('status_chamados', $request->situacao))
+
+            ->when($request->id_solicitacao, fn($q) => 
+                $q->whereIn('id_solicitacao_chamados', $request->id_solicitacao)
+            )
+
+            ->when($request->prioridade, fn($q) => 
+                $q->whereHas('solicitacao', fn($sub) => 
+                    $sub->whereIn('prioridade_solicitacoes', $request->prioridade)
+                )
+            )
+
+            ->when($request->id_user_respond, fn($q) => 
+                $q->whereIn('id_user_chamados', $request->id_user_respond)
+            )
+
+            ->when($request->id_departamento, fn($q) => 
+                $q->whereIn('id_departamento_chamados', $request->id_departamento)
+            )
+
+            ->when($request->id_user_create, fn($q) => 
+                $q->whereIn('id_criador_chamados', $request->id_user_create)
+            )
+
+            ->when($request->codigo, fn($q) => 
+                $q->where('id_chamados', $request->codigo)
+            )
+
+            ->when($request->inicio || $request->fim, function ($q) use ($request) {
+
+                $inicio = $request->inicio
+                    ? $request->inicio . " 00:00:00"
+                    : '0000-00-00 00:00:00';
+
+                $fim = $request->fim
+                    ? $request->fim . " 23:59:59"
+                    : now()->format('Y-m-d') . " 23:59:59";
+
+                $q->whereBetween('data_cadastro_chamados', [$inicio, $fim]);
+            });
+
+            $dataTicket = $query->get();
+
             return response()->json([
-                "message" => "Registros ".count($dataTicket)." encontrados",
+                "message" => "Registros ".$dataTicket->count()." encontrados",
                 "data" => $dataTicket,
                 "status" => 200
             ], 200);
@@ -341,6 +227,9 @@ class ChamadoController extends Controller
                             "caminho_file" => $path,
                             "id_chamado_file" => $chamado->id_chamados
                         ]);
+
+                        //Realiza o processamento do OCR para cada arquivo enviado, extraindo o texto e exibindo no log
+                        //TesteJob::dispatch(public_path($path));
 
                     }
 
@@ -747,6 +636,13 @@ class ChamadoController extends Controller
 
         $this->pdf->create();
 
+    }
+
+    public function testeSQL(){
+        $sql = DB::table("chamados")->where("status_chamados", 1)
+        ->orWhere("status_chamados", 2)
+        ->count();
+        return $sql;
     }
 
 }
